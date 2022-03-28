@@ -1,0 +1,4 @@
+docker run -it -v "$PWD":/mnt/locust --entrypoint=/bin/bash locustio/locust
+
+cd Desktop (là où le fichier se situe)
+docker run -p 8089:8089 -v %cd%:/mnt/locust locustio/locust -f /mnt/locust/locustfile.py

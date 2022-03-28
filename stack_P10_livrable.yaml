@@ -1,0 +1,832 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Template AWS CloudFormation de creation d infrastructure dans le cadre du projet 10 du parcours de formation AIC
+
+Resources:
+
+#########################################################################
+########################### Creating Vpcs  ##############################
+#########################################################################
+
+  Vpc1:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: Vpc1
+
+  Vpc2:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: Vpc2
+
+#########################################################################
+########################## Creating Subnets #############################
+#########################################################################
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc1
+      AvailabilityZone: eu-west-3a
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: Name
+          Value: Private Subnet A
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc1
+      AvailabilityZone: eu-west-3b
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: Name
+          Value: Private Subnet B
+
+  PrivateSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc2
+      AvailabilityZone: eu-west-3c
+      CidrBlock: 10.0.50.0/24
+      Tags:
+        - Key: Name
+          Value: Private Subnet C
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc1
+      AvailabilityZone: eu-west-3a
+      CidrBlock: 10.0.100.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet A
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc1
+      AvailabilityZone: eu-west-3b
+      CidrBlock: 10.0.200.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet B
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc2
+      AvailabilityZone: eu-west-3c
+      CidrBlock: 10.0.60.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet C
+
+#########################################################################
+################ Creating & Attach Internet Gateways ####################
+#########################################################################
+
+  Vpc1InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Vpc1 Internet Gateway
+        - Key: Network
+          Value: Public
+
+  Vpc1InternetAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc1
+      InternetGatewayId: !Ref Vpc1InternetGateway
+
+  Vpc2InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Vpc2 Internet Gateway
+        - Key: Network
+          Value: Public
+
+  Vpc2InternetAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc2
+      InternetGatewayId: !Ref Vpc2InternetGateway
+
+#########################################################################
+######################## Creating Elastic IPs ###########################
+#########################################################################
+
+  NatEipPublicA:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: EIP Nat Subnet A
+
+  NatEipPublicB:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: EIP Nat Subnet B
+
+  NatEipPublicC:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: EIP Nat Subnet C
+
+#########################################################################
+######################## Creating Nat Gateways ##########################
+#########################################################################
+
+  NatGatewayA:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipPublicA.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - Key: Name
+          Value: Nat Gateway Public A
+
+  NatGatewayB:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipPublicB.AllocationId
+      SubnetId: !Ref PublicSubnetB
+      Tags:
+        - Key: Name
+          Value: Nat Gateway Public B
+
+  NatGatewayC:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEipPublicC.AllocationId
+      SubnetId: !Ref PublicSubnetC
+      Tags:
+        - Key: Name
+          Value: Nat Gateway Public C
+
+#########################################################################
+####################### Creating Route Tables  ##########################
+#########################################################################
+
+  PublicRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc1
+      Tags:
+        - Key: Name
+          Value: Vpc1 Public Route Table A
+
+  PublicRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc1
+      Tags:
+        - Key: Name
+          Value: Vpc1 Public Route Table B
+
+  PublicRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc2
+      Tags:
+        - Key: Name
+          Value: Vpc2 Public Route Table C
+
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc1
+      Tags:
+        - Key: Name
+          Value: Vpc1  Private Route Table A
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc1
+      Tags:
+        - Key: Name
+          Value: Vpc1 Private Route Table B
+
+  PrivateRouteTableC:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc2
+      Tags:
+        - Key: Name
+          Value: Vpc2 Private Route Table C
+
+#########################################################################
+####################### Attaching Route Tables ##########################
+#########################################################################
+
+  AttachPublicRouteTableA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableA
+      SubnetId: !Ref PublicSubnetA
+
+  AttachPublicRouteTableB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableB
+      SubnetId: !Ref PublicSubnetB
+
+  AttachPublicRouteTableC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableC
+      SubnetId: !Ref PublicSubnetC
+
+  AttachPrivateRouteTableA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      SubnetId: !Ref PrivateSubnetA
+
+  AttachPrivateRouteTableB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateSubnetB
+
+  AttachPrivateRouteTableC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableC
+      SubnetId: !Ref PrivateSubnetC
+
+#########################################################################
+########################## Route Instructions ###########################
+#########################################################################
+
+  PublicRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Vpc1InternetGateway
+      RouteTableId: !Ref PublicRouteTableA
+
+  PublicRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Vpc1InternetGateway
+      RouteTableId: !Ref PublicRouteTableB
+
+  PublicRouteC:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Vpc2InternetGateway
+      RouteTableId: !Ref PublicRouteTableC
+
+  PrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayA
+      RouteTableId: !Ref PrivateRouteTableA
+
+  PrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayB
+      RouteTableId: !Ref PrivateRouteTableB
+
+  PrivateRouteC:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGatewayC
+      RouteTableId: !Ref PrivateRouteTableC
+
+########################################################################
+##################### Creating Security Groups #########################
+########################################################################
+
+  Vpc1LbSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Vpc1
+      GroupDescription: ELB security group
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Vpc1 ELB Security Group
+
+  Vpc1WebSG:
+    DependsOn: Vpc1LbSG
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Vpc1
+      GroupDescription: Allow HTTP HTTPS and SSH to Website EC2 Instance
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref Vpc1LbSG
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref Vpc1LbSG
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 10.0.0.0/16
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.1.0/24
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.2.0/24
+      Tags:
+        - Key: Name
+          Value: Vpc1 Website Security Group
+
+  Vpc1RdsSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Vpc1
+      GroupDescription: Allow DB Access from Public Subnet A and B
+      SecurityGroupEgress: # Autoriser l'instance à joindre toutes les adresses par tous type de protocole
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.100.0/24 # Autoriser le CIDR 10.0.100.0/24 à se connecter sur cette instance par le port 3306
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 10.0.200.0/24
+      Tags:
+        - Key: Name
+          Value: Vpc1 Rds Security Group
+
+  Vpc2VpnSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref Vpc2
+      GroupDescription: Allow VPN tunnel, ping and ssh between AWS and Entreprise
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: udp
+          FromPort: 500
+          ToPort: 500
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 4500
+          ToPort: 4500
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 500
+          ToPort: 500
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 4500
+          ToPort: 4500
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0 
+      Tags:
+        - Key: Name
+          Value: Vpc2 Vpn Security Group
+
+#########################################################################
+####################  Creating Rds Database Group #######################
+#########################################################################
+
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Db Subnet Group
+      DBSubnetGroupName: Rds-SubnetGroup
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      Tags:
+        - Key: Name
+          Value: Db Subnet Group
+
+#########################################################################
+####################### Creating Rds Databases ##########################
+#########################################################################
+
+  MasterDbInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    Properties:
+      DBName: wordpress
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      DBInstanceIdentifier: database-master
+      DBInstanceClass: db.t2.micro
+      AllocatedStorage: 10
+      StorageType: gp2
+      Engine: MariaDB
+      EngineVersion: 10.5.13
+      AutoMinorVersionUpgrade: true
+      VPCSecurityGroups:
+        - !GetAtt Vpc1RdsSG.GroupId
+      PubliclyAccessible: false
+      MasterUsername: wordpress
+      MasterUserPassword: wordpress
+      BackupRetentionPeriod: 7
+      MultiAZ: false
+      AvailabilityZone: eu-west-3a
+      Tags:
+        - Key: Name
+          Value: Website Database
+
+  ReplicaDbInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      SourceDBInstanceIdentifier: !Ref MasterDbInstance
+      DBInstanceClass: db.t2.micro
+      SourceRegion: eu-west-3a
+      AvailabilityZone: eu-west-3b
+      DBInstanceIdentifier: database-replica
+      Tags:
+        - Key: Name
+          Value: Website Replica Database
+
+#########################################################################
+######################## Creating Target Group ##########################
+#########################################################################
+
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref Vpc1
+      Name: WebTargetGroup
+      TargetType: instance
+
+#########################################################################
+############################# Creating ELB ##############################
+#########################################################################
+
+  WebLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref Vpc1LbSG
+      Subnets:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+
+#########################################################################
+####################### Creating ELB's Listener #########################
+#########################################################################
+
+  WebLoadBlancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref WebLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref WebTargetGroup
+
+#########################################################################
+######################### Creating S3 Bucket ############################
+#########################################################################
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 100dales-wordpress-bucket
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+#########################################################################
+################### Creating S3 User with Acces Key #####################
+#########################################################################
+
+  UserS3:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: Wordpress
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  UserAccesKeyS3:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref UserS3
+
+#########################################################################
+#################### Creating Launch Configuration ######################
+#########################################################################
+
+  WebLaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      LaunchConfigurationName: Wordpress
+      AssociatePublicIpAddress: true
+      ImageId: ami-05a5b02a9572b2146 # Amazon Linux 2
+      InstanceType: t2.micro
+      KeyName: mysshkeypair
+      SecurityGroups:
+        - !Ref Vpc1WebSG
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            apt update
+            apt upgrade -y
+            amazon-linux-extras install docker -y
+            systemctl start docker
+            systemctl enable docker
+            docker pull 100dales/wp-custom-05
+            docker run --name=wordpress -d -p 80:80 -e WORDPRESS_DB_HOST=${RdsHostName} 100dales/wp-custom-05:latest
+            docker exec wordpress /var/www/install-site-wp.sh ${LbDnsName} ${S3AccesKeyId} ${S3SecretUserAccesKey} ${S3BucketName}
+          - RdsHostName: !GetAtt MasterDbInstance.Endpoint.Address
+            LbDnsName: !GetAtt WebLoadBalancer.DNSName
+            S3AccesKeyId: !Ref UserAccesKeyS3
+            S3SecretUserAccesKey: !GetAtt UserAccesKeyS3.SecretAccessKey
+            S3BucketName: !Ref S3Bucket
+
+#########################################################################
+##################### Creating Auto Scaling Group #######################
+#########################################################################
+
+  WebAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchConfigurationName: !Ref WebLaunchConfig
+      AvailabilityZones:
+        - eu-west-3a
+        - eu-west-3b
+      VPCZoneIdentifier:
+        - !Ref PublicSubnetA
+        - !Ref PublicSubnetB
+      TargetGroupARNs:
+        - !Ref WebTargetGroup
+      Cooldown: 60 # Seconds
+      DesiredCapacity: 2
+      MaxSize: 6
+      MinSize: 2
+
+#########################################################################
+####################### Creating Scaling Policy #########################
+#########################################################################
+
+  WebScaleUpPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref WebAutoScalingGroup
+      ScalingAdjustment: 1
+
+  WebScaleDownPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref WebAutoScalingGroup
+      ScalingAdjustment: -1
+
+#########################################################################
+##################### Creating Email Notifications #######################
+#########################################################################
+
+  WebEmailNotification:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: [RemplirIciTonEmail]
+          Protocol: email
+
+#########################################################################
+###################### Creating CloudWatch Alarm ########################
+#########################################################################
+
+  WebScaleUpCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      MetricName: CPUUtilization
+      AlarmDescription: Scale up if the website has reached 80% of CPU usage !
+      Namespace: AWS/EC2
+      EvaluationPeriods: 1
+      Statistic: Average
+      Threshold: 80
+      Period: 30
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref WebScaleUpPolicy
+        - !Ref WebEmailNotification
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebAutoScalingGroup
+
+  WebScaleDownCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      MetricName: CPUUtilization
+      AlarmDescription: Scale down if the website has reached less than 80% of CPU usage !
+      Namespace: AWS/EC2
+      EvaluationPeriods: 1
+      Statistic: Average
+      Threshold: 80
+      Period: 300
+      ComparisonOperator: LessThanThreshold
+      AlarmActions:
+        - !Ref WebScaleDownPolicy
+        - !Ref WebEmailNotification
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref WebAutoScalingGroup
+
+#########################################################################
+############## Creating Ec2 Instances (Vpn Private Subnet) ##############
+#########################################################################
+
+  Vpc2VpnGwInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-04e905a52ec8010b2 # Debian AMI : ami-04e905a52ec8010b2
+      InstanceType: t2.micro
+      KeyName: mysshkeypair
+      Tags:
+        - Key: Name
+          Value: Vpc2 Vpn Instance
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          SubnetId: !Ref PrivateSubnetC
+          PrivateIpAddress: 10.0.50.10
+          GroupSet:
+            - !Ref Vpc2VpnSecurityGroup
+      UserData:
+        Fn::Base64:
+          !Sub
+          - |
+            #!/bin/bash
+
+            sudo su - root
+            echo "Mode root : Ok" >> /var/log/install.txt
+
+            AwsPublicIp=$(curl http://checkip.amazonaws.com)
+            echo "Récupération de l'ip publique AWS : Ok" >> /var/log/install.txt
+
+            apt-get update -y
+            echo "MAJ des paquets : Ok " >> /var/log/install.txt
+
+            sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+            sed -i 's/#net.ipv4.conf.all.accept_redirects = 0/net.ipv4.conf.all.accept_redirects = 0/' /etc/sysctl.conf
+            sed -i 's/#net.ipv4.conf.all.send_redirects = 0/net.ipv4.conf.all.send_redirects = 0/' /etc/sysctl.conf
+            sysctl -p
+            echo "Activer le forwarding : Ok " >> /var/log/install.txt
+
+            echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+            echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+            apt-get install iptables-persistent -y
+            echo "Installation d'iptables : Ok " >> /var/log/install.txt
+
+            iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+            iptables -t nat -A POSTROUTING -s 192.168.50.0/24 -d 10.0.50.0/24 -j MASQUERADE
+            iptables-save > /etc/iptables/rules.v4
+            echo "Configuration et sauvegarde d'iptables : Ok " >> /var/log/install.txt
+
+            apt update && apt upgrade -y
+            export DEBIAN_FRONTEND=noninteractive
+            apt install strongswan strongswan-pki libcharon-extra-plugins -q -y
+            echo "Installation de strongswan : Ok " >> /var/log/install.txt
+
+            cat > /etc/ipsec.secrets <<EOF
+            # Aws Public Ip - Site PublicIp : PSK "Strongswan Key to both servers"
+            $AwsPublicIp [RemplirIci] : PSK "[RemplirIci]"
+            EOF
+            echo "Configuration d'ipsec.secrets : Ok " >> /var/log/install.txt
+            
+            cp /etc/ipsec.conf /etc/ipsec.default_conf
+            echo "Copie d'ipsec.conf : Ok " >> /var/log/install.txt
+
+            cat > /etc/ipsec.conf <<EOF
+            config setup
+                    charondebug="all"
+                    uniqueids=yes
+                    strictcrlpolicy=no
+            conn aws-to-site
+                    type=tunnel
+                    authby=secret
+                    # Aws Vpn Ip
+                    left=10.0.50.10
+                    # Aws Public Ip
+                    leftid=$AwsPublicIp
+                    # Aws CidrIp
+                    leftsubnet=10.0.50.0/24
+                    # Site Public Ip
+                    right=[RemplirIci]
+                    # Site CidrIp
+                    rightsubnet=192.168.1.0/24
+                    auto=start
+                    keyexchange=ikev1
+                    ike=aes128-sha1-modp1024
+                    ikelifetime=8h
+                    esp=aes128-sha1-modp1024
+                    lifetime=1h
+            conn add
+                    also=aws-to-site
+                    leftsubnet=10.0.50.0/24
+                    rightsubnet=192.168.50.0/24
+            EOF
+            echo "Configuration d'ipsec.conf : Ok " >> /var/log/install.txt
+
+            ipsec restart
+            ipsec up aws-to-site
+            systemctl enable ipsec
+            echo "Démarrage d'ipsec : Ok " >> /var/log/install.txt
+
+          - NatEip: !Ref NatEipPublicC
+            NatGateway: !Ref NatGatewayC
+            
+          
+  Vpc2IntranetInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-05a5b02a9572b2146
+      InstanceType: t2.micro
+      KeyName: mysshkeypair
+      SubnetId: !Ref PrivateSubnetC
+      PrivateIpAddress: 10.0.50.20
+      SecurityGroupIds:
+        - !Ref Vpc2VpnSecurityGroup
+      Tags:
+        - Key: Name
+          Value: Vpc2 Intranet Instance
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          amazon-linux-extras install lamp-mariadb10.2-php7.2 php7.2 -y
+          yum install httpd -y
+          systemctl start httpd
+          systemctl enable httpd
+          echo "P10_Maîtrisez_votre_Infrastructure_Cloud" > /var/www/html/index.html
+      Tags:
+        -
+          Key: Name
+          Value: Intranet

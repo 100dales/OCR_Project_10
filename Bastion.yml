@@ -1,0 +1,50 @@
+########################################      
+#        INSTANCE DU BASTION           #
+########################################
+  Bastion:
+    Type: AWS::EC2::Instance
+    Properties: 
+      KeyName: mysshkeypair
+      ImageId: ami-04e905a52ec8010b2
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: 0
+          SubnetId: !Ref PublicSubnetC
+          GroupSet: 
+            - !Ref BastionSecurityGroup
+          PrivateIpAddress: 10.0.60.30
+      Tags:
+        - Key: Name
+          Value: Bastion
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash
+            sudo su - root
+            apt-get update -y
+            cat > /home/admin/mysshkeypair.pem <<EOF
+            -----BEGIN RSA PRIVATE KEY-----
+            [RemplirIci]
+            -----END RSA PRIVATE KEY-----
+            EOF
+            chmod 400 /home/admin/mysshkeypair.pem
+
+# Pour se connecter :  ssh -i /home/admin/mysshkeypair.pem ubuntu@10.0.50.10 (instance vpn à joindre)
+
+#########################################################   
+#      GROUPE DE SECURITE DE L'INSTANCE DU BASTION      #
+#########################################################
+  BastionSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Groupe de securite Bastion
+        GroupName: Groupe de securite Bastion
+        SecurityGroupEgress:
+          # L'instance est autorisée à joindre toutes les adresses avec tous les protocoles
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+        SecurityGroupIngress:
+          - IpProtocol: -1
+            CidrIp: 0.0.0.0/0
+        VpcId: !Ref Vpc2

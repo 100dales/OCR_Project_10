@@ -1,0 +1,50 @@
+Avant la soutenance :
+
+1 - Lancer 1 heure avant la stack (25 min de temps de création)
+
+2 - Pendant l'implémentation de la stack :
+	- Lancer les VMs et préparer les fenêtres et fichiers de configuration
+	- Lancer le container Locust dans cmd : 
+		- cd Desktop
+		- docker run -p 8089:8089 -v %cd%:/mnt/locust locustio/locust -f /mnt/locust/locustfile.py
+		- Sur Firefox, aller sur : http://localhost:8089/
+			- Mettre en paramètres :
+				- Nombre de users : 94
+				- Spawn rate : 5
+				- Host : http://adresse DNS de l'ELB
+
+2 - Tester la Partie Wordpress :
+	- Vérifier l'accès via le loadbalancer
+	- Normalement pas d'accès en mode admin :
+		- Reboot les 1 instance pour réinitialiser la connexion à la BDD (1 min max)
+	- Se connecter en admin :
+		- Login : Dales // Mdp : 100Dales!
+		- Vérifier la présence du plugin
+		- Tester un upload de photo (cf bureau)
+		- Vérifier la présence de la photo dans le bucket S3
+		- Supprimer la photo depuis l'interface admin Wordpress
+	- Dans Locust, lancer les requêtes
+	- Dans AWS :
+		- EC2 > Actualiser la page des instances (Attendre quelques secondes pour voir apparaître une nouvelle instance)
+			- Montrer la création d'une nouvelle instance
+	- Dans Gmail :
+		- Montrer la notification du Scale Up
+
+3 - Partie VPN :
+	- Sur AWS :
+		- Reboot Vpc2 Vpn Gateway 1 ou 2 fois (attendre 30/40 sec)
+		- Bien attendre 
+	- Lancer les VMs :
+		- SRV-VPN :
+			- Ouvrir un terminal et ajouter l'ip publique de la NatGatewayC dans :
+				- nano /etc/ipsec.conf
+				- nano /etc/ipsec.secrets
+				- ipsec restart ( après le reboot de Vpc2 Vpn Gateway)
+				- ipsec start --nofork (à faire de chaque côté du tunnel)
+		- SRV-FILES :
+			- Ouvrir un terminal et ping 10.0.50.10
+			- Ouvrir une page web et aller sur 10.0.50.20
+
+
+tips : rentrer dans un conteneur ubuntu/debian
+	- docker exec -ti [ID_Image_Docker] bash
